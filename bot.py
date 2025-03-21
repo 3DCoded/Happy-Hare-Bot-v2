@@ -79,11 +79,14 @@ async def check_silence(channel):
             last_message_time = discord.utils.utcnow().timestamp()  # Initialize with current time
 
         elapsed_time = discord.utils.utcnow().timestamp() - last_message_time
+        print(f'Last message was at {last_message_time}')
+        print(f'Now it is {discord.utils.utcnow().timestamp()}')
+        print(f'{elapsed_time}s elapsed')
         if elapsed_time >= SILENCE_THRESHOLD and last_message_username != bot.user: # Make sure the bot isn't replying to itself
             await send_ui_msg(channel) # Send the UI message
             last_message_time = discord.utils.utcnow().timestamp()  # Reset timer
 
-        await asyncio.sleep(SILENCE_THRESHOLD // 2)  # Check periodically
+        await asyncio.sleep(SILENCE_THRESHOLD // 10)  # Check periodically
 
 # /sync command to update / commands (reserved for admin-listed users)
 @bot.command()
@@ -105,9 +108,11 @@ async def tell_code(ctx, arg: discord.Member):
 @bot.event
 async def on_message(message):
     global last_message_time, last_message_username
-    if message.channel.id == UI_CHANNEL_ID: # Only record messages in #mainsail-fluidd
+    print(f'#{message.channel.name} @{message.author} {message.content}')
+    if str(message.channel.id) == str(UI_CHANNEL_ID): # Only record messages in #mainsail-fluidd
         last_message_username = message.author # Update last message user
         last_message_time = discord.utils.utcnow().timestamp()  # Reset timer
+        print(f'Updating last time to {last_message_time}')
     
     # !code @user command
     if message.content.startswith('!code'):
