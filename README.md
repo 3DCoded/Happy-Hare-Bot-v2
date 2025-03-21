@@ -46,5 +46,4 @@ Other features:
 
 ## Installing
 
-> ![IMPORTANT]
-> WIP
+Just check the pinned messages. 😃
