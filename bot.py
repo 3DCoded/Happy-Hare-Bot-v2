@@ -30,22 +30,21 @@ Other features:
 - When a message is sent in the #mainsail-fluidd channel containing both "how" AND "?", the UI message is sent, but frendlier.
 """
 
+import os
+from dotenv import load_dotenv
 import discord
 import asyncio
 from discord.ext import commands
 
-# Retrieve token from file
-with open('.token') as file:
-    TOKEN = file.read().strip()
+# Retrieve sensitive information from file
+load_dotenv()
+
+TOKEN = os.getenv('TOKEN')
 SILENCE_THRESHOLD = 1*60*60 # 1 hour
 
 # Used for some commands
-ADMIN_USERIDS = [
-    1193638840204795935, # 3DCoded
-    1002671500211535962, # Mark Norris
-    449446700612845568, # moggieuk
-]
-UI_CHANNEL_ID = 1306047636117127318
+ADMIN_USERIDS = list(map(int, os.getenv('ADMIN_USERIDS').split(',')))
+UI_CHANNEL_ID = os.getenv('UI_CHANNEL_ID')
 
 intents = discord.Intents.default()
 intents.messages = True  # Read messages
