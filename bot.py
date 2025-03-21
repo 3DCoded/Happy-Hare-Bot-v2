@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-only
 """
 Happy Hare Bot v2
 by 3DCoded
