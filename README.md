@@ -41,7 +41,6 @@ The bot supports the following commands:
 
 Other features:
 
-- When the `#mainsail-fluidd` channel is idle for more than `SILENCE_THRESHOLD` seconds, the UI message is sent, as if someone had invoked the `!ui` command
 - When a message is sent in the `#mainsail-fluidd` channel containing both "how" AND "?", the UI message is sent, but frendlier.
 
 ## Installing
