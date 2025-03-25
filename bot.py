@@ -98,7 +98,7 @@ async def on_message(message):
         await message.delete()
         await send_ui_msg(message.channel)
     # Messages containing "how" AND "?" get a nice message.
-    elif ('how' in message.content.lower() and '?' in message.content) and message.channel.id == UI_CHANNEL_ID:
+    elif ('how' in message.content.lower() and '?' in message.content) and str(message.channel.id) == str(UI_CHANNEL_ID):
         await message.reply("Just check the pinned messages. :smiley:", silent=False)
 
     await bot.process_commands(message)
