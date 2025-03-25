@@ -99,7 +99,7 @@ async def tell_code(ctx, arg: discord.Member):
 @bot.event
 async def on_message(message):
     # print(message.author, message.content)
-    if message.content.strip() == '' and str(message.channel.id) == str(LANDING_CHANNELID):
+    if message.content.strip() == '' and len(message.stickers) == 0 and str(message.channel.id) == str(LANDING_CHANNELID):
         print(f'Welcoming {message.author.name}')
         await message.author.send(WELCOME_TEXT)
     elif '!welcome' in message.content and message.author.id in ADMIN_USERIDS:
