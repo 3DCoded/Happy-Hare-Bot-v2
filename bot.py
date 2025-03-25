@@ -39,9 +39,26 @@ load_dotenv()
 
 TOKEN = os.getenv('TOKEN')
 
+WELCOME_TEXT = """
+## Welcome to the Happy Hare Discord server!
+
+Here are a few quick things to know:
+
+🔔 Subscribe to the <#1305216802594361354> channel so you don't miss out on important Happy Hare updates.
+
+🖼️ Post pictures of completed prints in the <#1325809620417249280> channel.
+
+🌐 To install the new Mainsail/Fluidd interface for Happy Hare, read the **PINNED** messages in the <#1306047636117127318> channel. If you don't, I have been programmed to automatically remind you to **READ THE PINNED MESSAGES**. Sorry. This has happened a lot before...
+
+🛠️ Explore the various MMU channels in the "MMU Systems" section.
+
+📜 Have fun, and remember: this is a family-friendly server.
+"""
+
 # Used for some commands
 ADMIN_USERIDS = list(map(int, os.getenv('ADMIN_USERIDS').split(',')))
 UI_CHANNEL_ID = os.getenv('UI_CHANNEL_ID')
+LANDING_CHANNELID = os.getenv('LANDING_CHANNELID')
 
 intents = discord.Intents.default()
 intents.messages = True  # Read messages
@@ -78,12 +95,21 @@ async def sync(ctx):
 async def tell_code(ctx, arg: discord.Member):
     await ctx.response.send_message(f'''{arg.mention}{CODE_TEXT}''')
 
-
 # Event: Message received
 @bot.event
 async def on_message(message):
+    # print(message.author, message.content)
+    if message.content.strip() == '' and str(message.channel.id) == str(LANDING_CHANNELID):
+        print(f'Welcoming {message.author.name}')
+        await message.author.send(WELCOME_TEXT)
+    elif '!welcome' in message.content and message.author.id in ADMIN_USERIDS:
+        print(f'Welcoming {message.author.name}')
+        user_id = int(message.content.strip().split()[1][2:-1])
+        user = await bot.fetch_user(user_id)
+        await message.delete()
+        await user.send(WELCOME_TEXT)
     # !code @user command
-    if message.content.startswith('!code'):
+    elif message.content.startswith('!code'):
         user = message.content.split()[1]
         await message.delete()
         await message.channel.send(f'''{user}{CODE_TEXT}''')
