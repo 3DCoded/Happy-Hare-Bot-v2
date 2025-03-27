@@ -61,7 +61,7 @@ ADMIN_USERIDS = list(map(int, os.getenv('ADMIN_USERIDS').split(',')))
 UI_CHANNEL_ID = os.getenv('UI_CHANNEL_ID')
 LANDING_CHANNELID = os.getenv('LANDING_CHANNELID')
 
-MMUS = '3DChameleon,3MS,Angry Beaver,Box Turtle,ERCF,Night Owl,Pico MMU,QuattroBox,Tradrack'.strip().split(',')
+MMUS = '3DChameleon🦎,3MS,Box Turtle🐢,ERCF🥕,Night Owl🦉,Pico MMU,QuattroBox,Tradrack'.strip().split(',')
 
 intents = discord.Intents.default()
 intents.messages = True  # Read messages
