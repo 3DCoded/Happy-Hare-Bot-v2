@@ -30,9 +30,10 @@ Other features:
 """
 
 import os
+import random
 from dotenv import load_dotenv
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 # Retrieve sensitive information from file
 load_dotenv()
@@ -59,6 +60,8 @@ Here are a few quick things to know:
 ADMIN_USERIDS = list(map(int, os.getenv('ADMIN_USERIDS').split(',')))
 UI_CHANNEL_ID = os.getenv('UI_CHANNEL_ID')
 LANDING_CHANNELID = os.getenv('LANDING_CHANNELID')
+
+MMUS = '3DChameleon,3MS,Angry Beaver,Box Turtle,ERCF,Night Owl,Pico MMU,QuattroBox,Tradrack'.strip().split(',')
 
 intents = discord.Intents.default()
 intents.messages = True  # Read messages
@@ -133,6 +136,16 @@ async def on_message(message):
 @bot.event
 async def on_ready():
     print(f'{bot.user} has connected to Discord! {bot.guilds[0].name}')
+    # await bot.change_presence(activity=discord.Game(name='Printing with an MMU...'))
+    changeStatus.start()
+
+
+@tasks.loop(seconds=3600)
+async def changeStatus():
+    mmu = random.choice(MMUS)
+    status = f'with the {mmu}'
+    print(status)
+    await bot.change_presence(activity=discord.Game(name=status))
 
 # Run the bot
 bot.run(TOKEN)
