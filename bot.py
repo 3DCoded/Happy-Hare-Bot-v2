@@ -126,9 +126,9 @@ async def on_message(message):
     elif message.content.startswith('!ui'):
         await message.delete()
         await send_ui_msg(message.channel)
-    # Messages containing "how" AND "?" get a nice message.
-    elif ('how' in message.content.lower() and '?' in message.content) and str(message.channel.id) == str(UI_CHANNEL_ID):
-        await message.reply("Just check the pinned messages. :smiley:", silent=False)
+    # DISABLED: Messages containing "how" AND "?" get a nice message.
+    # elif ('how' in message.content.lower() and '?' in message.content) and str(message.channel.id) == str(UI_CHANNEL_ID):
+    #     await message.reply("Just check the pinned messages. :smiley:", silent=False)
 
     await bot.process_commands(message)
 
