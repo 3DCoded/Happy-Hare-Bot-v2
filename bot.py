@@ -197,35 +197,35 @@ async def on_message(message):
         with open('messages.txt', 'a') as file:
             file.write(f'\n{msg.id}')
 
-    # !code <@user> command
-    # !code <#channel> command
-    # !code channelid <@user> command
+    # !code @user command
+    # !code channel command
+    # !code channelid @user command
     elif message.content.startswith('!code'):
         param = str(' '.join(message.content.split()[1:]))
         await attempt_to_delete(message) # Delete message
         channel = message.channel
         user = ''
-        if param.startswith('<#'):
-            channel_id = int(param[2:-1])
+        if param.startswith('#') and not ' ' in param:
+            channel_id = int(param[1:])
             channel = await bot.fetch_channel(channel_id)
-        elif param.startswith('<@'):
-            user = param
+        elif param.startswith('@') and not ' ' in param:
+            user = '<@'+param[1:]+'>'
         elif len(param.split()) == 2:
-            channel_id = int(param.split()[0])
+            channel_id = int(param.split()[0][1:])
             channel = await bot.fetch_channel(channel_id)
-            user = param.split()[1]
-            nline = '\n'
+            user = '<@'+param.split()[1][1:]+'>'
+        nline = '\n'
         await channel.send(f'''{user+nline if user != '' else ''}{CODE_TEXT}''')
     # !say <text> command
-    # !say <#channel> <text> command
+    # !say channelid <text> command
     elif message.content.startswith('!say'):
         # Make sure it's an approved user
         if message.author.id in ADMIN_USERIDS:
             msg = str(message.content[5:])
             channel = message.channel
             # If using !say <#channel> <text> format
-            if msg.startswith('<#'):
-                channel_id = int(msg.split()[0][2:-1]) # Get channel id
+            if msg.startswith('#'):
+                channel_id = int(msg.split()[0][1:]) # Get channel id
                 msg = ' '.join(msg.split()[1:]) # Remove channel id from message
                 channel = await bot.fetch_channel(channel_id) # Fetch channel from id
             elif msg.isnumeric():
