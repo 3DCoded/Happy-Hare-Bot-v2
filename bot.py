@@ -181,7 +181,7 @@ async def on_message(message):
             await msg.add_reaction(emoji)
         with open('messages.txt', 'a') as file:
             file.write(f'\n{msg.id}')
-    elif '!welcome' in message.content and message.author.id in ADMIN_USERIDS:
+    elif message.content.startswith('!welcome') and message.author.id in ADMIN_USERIDS:
         print(f'Welcoming {message.author.name}')
         user_id_str = message.content.strip().split()[1]
         try:
@@ -210,6 +210,8 @@ async def on_message(message):
             channel = await bot.fetch_channel(channel_id)
         elif param.startswith('@') and not ' ' in param:
             user = '<@'+param[1:]+'>'
+        elif param.startswith('<@') and not ' ' in param:
+            user = param[2:-1]
         elif len(param.split()) == 2:
             channel_id = int(param.split()[0][1:])
             channel = await bot.fetch_channel(channel_id)
