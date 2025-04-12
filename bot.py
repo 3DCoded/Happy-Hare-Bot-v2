@@ -221,13 +221,17 @@ async def on_message(message):
     elif message.content.startswith('!say'):
         # Make sure it's an approved user
         if message.author.id in ADMIN_USERIDS:
-            msg = message.content[5:]
+            msg = str(message.content[5:])
             channel = message.channel
             # If using !say <#channel> <text> format
             if msg.startswith('<#'):
                 channel_id = int(msg.split()[0][2:-1]) # Get channel id
                 msg = ' '.join(msg.split()[1:]) # Remove channel id from message
                 channel = await bot.fetch_channel(channel_id) # Fetch channel from id
+            elif msg.isnumeric():
+                channel_id = int(msg)
+                msg = ' '.join(msg.split()[1:])
+                channel = await bot.fetch_channel(channel_id)
             await attempt_to_delete(message) # Delete user message
             await channel.send(msg) # Send the bot message
     # !ui command
