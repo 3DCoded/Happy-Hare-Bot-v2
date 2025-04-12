@@ -49,19 +49,22 @@ Here are a few quick things to know:
 
 🔔 Subscribe to the <#1305216802594361354> channel so you don't miss out on important Happy Hare updates.
 
-🖼️ Post pictures of completed prints in the <#1325809620417249280> channel.
+🖼️ Post pictures of completed multimaterial prints in the <#1325809620417249280> channel.
 
 🌐 To install the new Mainsail/Fluidd interface for Happy Hare, read the **PINNED** messages in the <#1306047636117127318> channel. If you don't, I have been programmed to automatically remind you to **READ THE PINNED MESSAGES**. Sorry. This has happened a lot before...
 
 🛠️ Explore the various MMU channels in the "MMU Systems" section.
 
 📜 Have fun, and remember: this is a family-friendly server.
+
+❤️ React to this message with the emojis for your favorite MMU's to receive update notifications from their designers.
 """
 
 # Used for some commands
 ADMIN_USERIDS = list(map(int, os.getenv('ADMIN_USERIDS').split(',')))
 UI_CHANNEL_ID = os.getenv('UI_CHANNEL_ID')
 LANDING_CHANNELID = os.getenv('LANDING_CHANNELID')
+GUILD_ID = int(os.getenv('GUILD_ID'))
 
 if not os.path.exists('messages.txt'):
     with open('messages.txt', 'w+') as file:
@@ -80,6 +83,12 @@ bot = commands.Bot(command_prefix='/', intents=intents)
 
 def intenv(name):
     return int(os.getenv(name))
+
+async def attempt_to_delete(message):
+    try:
+        await message.delete()
+    except discord.errors.Forbidden:
+        pass
 
 ROLES = {}
 
@@ -128,10 +137,11 @@ async def on_raw_reaction_add(payload):
     emoji_label = payload.emoji.name
     for role_name, info in ROLES.items():
         if info['emoji'] == emoji_label or getattr(info['emoji'], 'name', None) == emoji_label:
-            guild = bot.get_guild(payload.guild_id)
+            guild = bot.get_guild(GUILD_ID)
+            member = await guild.fetch_member(user.id)
             role = guild.get_role(info['roleid'])
             print(role.name)
-            await payload.member.add_roles(role)
+            await member.add_roles(role)
             print(f'Added {user.display_name} to {role_name}')
             await user.send(f'You have successfully subscribed to {role.name}.')
             break
@@ -150,7 +160,7 @@ async def on_raw_reaction_remove(payload):
     emoji_label = payload.emoji.name
     for role_name, info in ROLES.items():
         if info['emoji'] == emoji_label or getattr(info['emoji'], 'name', None) == emoji_label:
-            guild = bot.get_guild(payload.guild_id)
+            guild = bot.get_guild(GUILD_ID)
             member = await guild.fetch_member(user.id)
             role = guild.get_role(info['roleid'])
             print(role.name)
@@ -165,31 +175,72 @@ async def on_message(message):
     # print(message.author, message.content)
     if message.content.strip() == '' and len(message.stickers) == 0 and str(message.channel.id) == str(LANDING_CHANNELID):
         print(f'Welcoming {message.author.name}')
-        await message.author.send(WELCOME_TEXT)
+        msg = await message.author.send(WELCOME_TEXT)
+        for role_name in ROLES:
+            emoji = ROLES[role_name]['emoji']
+            await msg.add_reaction(emoji)
+        with open('messages.txt', 'a') as file:
+            file.write(f'\n{msg.id}')
     elif '!welcome' in message.content and message.author.id in ADMIN_USERIDS:
         print(f'Welcoming {message.author.name}')
-        user_id = int(message.content.strip().split()[1][2:-1])
+        user_id_str = message.content.strip().split()[1]
+        try:
+            user_id = int(user_id_str)
+        except:
+            user_id = int(user_id_str[2:-1])
         user = await bot.fetch_user(user_id)
-        await message.delete()
-        await user.send(WELCOME_TEXT)
-    # !code @user command
+        await attempt_to_delete(message)
+        msg = await user.send(WELCOME_TEXT)
+        for role_name in ROLES:
+            emoji = ROLES[role_name]['emoji']
+            await msg.add_reaction(emoji)
+        with open('messages.txt', 'a') as file:
+            file.write(f'\n{msg.id}')
+
+    # !code <@user> command
+    # !code <#channel> command
+    # !code channelid <@user> command
     elif message.content.startswith('!code'):
-        user = message.content.split()[1]
-        await message.delete()
-        await message.channel.send(f'''{user}{CODE_TEXT}''')
+        param = str(' '.join(message.content.split()[1:]))
+        await attempt_to_delete(message) # Delete message
+        channel = message.channel
+        user = ''
+        if param.startswith('<#'):
+            channel_id = int(param[2:-1])
+            channel = await bot.fetch_channel(channel_id)
+        elif param.startswith('<@'):
+            user = param
+        elif len(param.split()) == 2:
+            channel_id = int(param.split()[0])
+            channel = await bot.fetch_channel(channel_id)
+            user = param.split()[1]
+        await channel.send(f'''{user+'\n' if user != '' else ''}{CODE_TEXT}''')
     # !say <text> command
+    # !say <#channel> <text> command
     elif message.content.startswith('!say'):
+        # Make sure it's an approved user
         if message.author.id in ADMIN_USERIDS:
             msg = message.content[5:]
-            await message.delete()
-            await message.channel.send(msg)
+            channel = message.channel
+            # If using !say <#channel> <text> format
+            if msg.startswith('<#'):
+                channel_id = int(msg.split()[0][2:-1]) # Get channel id
+                msg = ' '.join(msg.split()[1:]) # Remove channel id from message
+                channel = await bot.fetch_channel(channel_id) # Fetch channel from id
+            await attempt_to_delete(message) # Delete user message
+            await channel.send(msg) # Send the bot message
     # !ui command
+    # !ui channelid command
     elif message.content.startswith('!ui'):
-        await message.delete()
-        await send_ui_msg(message.channel)
+        channel = message.channel
+        if len(message.content.split()) == 2:
+            channel_id = int(message.content.split()[1])
+            channel = await bot.fetch_channel(channel_id)
+        await attempt_to_delete(message)
+        await send_ui_msg(channel)
     # !roles command
     elif message.content.startswith('!roles') and message.author.id in ADMIN_USERIDS:
-        await message.delete()
+        await attempt_to_delete(message)
         if len(message.content.split()) > 1:
             channel_id = int(message.content.split()[1][2:-1])
             channel = await bot.fetch_channel(channel_id)
@@ -201,9 +252,6 @@ async def on_message(message):
         for role_name in ROLES:
             emoji = ROLES[role_name]['emoji']
             await msg.add_reaction(emoji)
-    # DISABLED: Messages containing "how" AND "?" get a nice message.
-    # elif ('how' in message.content.lower() and '?' in message.content) and str(message.channel.id) == str(UI_CHANNEL_ID):
-    #     await message.reply("Just check the pinned messages. :smiley:", silent=False)
 
     await bot.process_commands(message)
 
@@ -212,7 +260,6 @@ async def on_message(message):
 async def on_ready():
     global ROLES
     print(f'{bot.user} has connected to Discord! {bot.guilds[0].name}')
-    # await bot.change_presence(activity=discord.Game(name='Printing with an MMU...'))
     ROLES = {
         '3DChameleon': {
             'emoji': bot.get_emoji(intenv('3DCHAMELEON_EMOJI')),
