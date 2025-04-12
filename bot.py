@@ -187,7 +187,7 @@ async def on_message(message):
         try:
             user_id = int(user_id_str)
         except:
-            user_id = int(user_id_str[2:-1])
+            user_id = int(user_id_str[1:])
         user = await bot.fetch_user(user_id)
         await attempt_to_delete(message)
         msg = await user.send(WELCOME_TEXT)
@@ -198,8 +198,8 @@ async def on_message(message):
             file.write(f'\n{msg.id}')
 
     # !code @user command
-    # !code channel command
-    # !code channelid @user command
+    # !code #channelid command
+    # !code #channelid @user command
     elif message.content.startswith('!code'):
         param = str(' '.join(message.content.split()[1:]))
         await attempt_to_delete(message) # Delete message
@@ -217,7 +217,7 @@ async def on_message(message):
         nline = '\n'
         await channel.send(f'''{user+nline if user != '' else ''}{CODE_TEXT}''')
     # !say <text> command
-    # !say channelid <text> command
+    # !say #channelid <text> command
     elif message.content.startswith('!say'):
         # Make sure it's an approved user
         if message.author.id in ADMIN_USERIDS:
@@ -235,22 +235,22 @@ async def on_message(message):
             await attempt_to_delete(message) # Delete user message
             await channel.send(msg) # Send the bot message
     # !ui command
-    # !ui channelid command
+    # !ui #channelid command
     elif message.content.startswith('!ui'):
         channel = message.channel
         if len(message.content.split()) == 2:
-            channel_id = int(message.content.split()[1])
+            channel_id = int(message.content.split()[1][1:])
             channel = await bot.fetch_channel(channel_id)
         await attempt_to_delete(message)
         await send_ui_msg(channel)
     # !roles command
     elif message.content.startswith('!roles') and message.author.id in ADMIN_USERIDS:
         await attempt_to_delete(message)
-        if len(message.content.split()) > 1:
-            channel_id = int(message.content.split()[1][2:-1])
-            channel = await bot.fetch_channel(channel_id)
-        else:
-            channel = message.channel
+        # if len(message.content.split()) > 1:
+        #     channel_id = int(message.content.split()[1][2:-1])
+        #     channel = await bot.fetch_channel(channel_id)
+        # else:
+        channel = message.channel
         msg = await channel.send('React to this message to subscribe to notifications for your MMU!')
         with open('messages.txt', 'a') as file:
             file.write(f'\n{msg.id}')
