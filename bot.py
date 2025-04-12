@@ -214,7 +214,8 @@ async def on_message(message):
             channel_id = int(param.split()[0])
             channel = await bot.fetch_channel(channel_id)
             user = param.split()[1]
-        await channel.send(f'''{user+'\n' if user != '' else ''}{CODE_TEXT}''')
+            nline = '\n'
+        await channel.send(f'''{user+nline if user != '' else ''}{CODE_TEXT}''')
     # !say <text> command
     # !say <#channel> <text> command
     elif message.content.startswith('!say'):
