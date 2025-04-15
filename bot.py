@@ -264,6 +264,12 @@ async def on_message(message):
         for role_name in ROLES:
             emoji = ROLES[role_name]['emoji']
             await msg.add_reaction(emoji)
+    elif message.content.startswith('!rolecount') and message.author.id in ADMIN_USERIDS:
+        await message.reply('Counting role users')
+        for role_name in ROLES:
+            role_id = ROLES[role_name]['roleid']
+            count = await count_members_with_role(bot, role_id=role_id)
+            await message.channel.send(f'{role_name}: {count}')
 
     await bot.process_commands(message)
 
@@ -312,6 +318,24 @@ async def on_ready():
     }
     changeStatus.start()
 
+
+async def count_members_with_role(bot: discord.Client, role_id: int) -> int:
+    guild = bot.get_guild(GUILD_ID)
+    if guild is None:
+        print("Guild not found.")
+        return 0
+
+    role = guild.get_role(role_id)
+    if role is None:
+        print("Role not found.")
+        return 0
+
+    count = 0
+    async for member in guild.fetch_members(limit=None):
+        if role in member.roles:
+            count += 1
+
+    return count
 
 @tasks.loop(seconds=3600)
 async def changeStatus():
