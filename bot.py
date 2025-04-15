@@ -30,6 +30,7 @@ Other features:
 """
 
 import os
+import sys
 import random
 import json
 from dotenv import load_dotenv
@@ -59,6 +60,10 @@ Here are a few quick things to know:
 
 ❤️ React to this message with the emojis for your favorite MMU's to receive update notifications from their designers.
 """
+
+def log(text):
+    with open('log.txt', 'a+') as file:
+        file.write(text + '\n')
 
 # Used for some commands
 ADMIN_USERIDS = list(map(int, os.getenv('ADMIN_USERIDS').split(',')))
@@ -110,7 +115,7 @@ async def send_ui_msg(ctx):
 # /sync command to update / commands (reserved for admin-listed users)
 @bot.command()
 async def sync(ctx):
-    print("sync command")
+    log("sync command")
     if ctx.author.id in ADMIN_USERIDS:
         await bot.tree.sync()
         await ctx.send('Command tree synced.')
@@ -140,9 +145,9 @@ async def on_raw_reaction_add(payload):
             guild = bot.get_guild(GUILD_ID)
             member = await guild.fetch_member(user.id)
             role = guild.get_role(info['roleid'])
-            print(role.name)
+            log(role.name)
             await member.add_roles(role)
-            print(f'Added {user.display_name} to {role_name}')
+            log(f'Added {user.display_name} to {role_name}')
             await user.send(f'You have successfully subscribed to {role.name}.')
             break
 
@@ -163,18 +168,18 @@ async def on_raw_reaction_remove(payload):
             guild = bot.get_guild(GUILD_ID)
             member = await guild.fetch_member(user.id)
             role = guild.get_role(info['roleid'])
-            print(role.name)
+            log(role.name)
             await member.remove_roles(role)
-            print(f'Removed {member.display_name} from {role_name}')
+            log(f'Removed {member.display_name} from {role_name}')
             await user.send(f'You have successfully unsubscribed from {role.name}.')
             break
 
 # Event: Message received
 @bot.event
 async def on_message(message):
-    # print(message.author, message.content)
+    # log(message.author, message.content)
     if message.content.strip() == '' and len(message.stickers) == 0 and str(message.channel.id) == str(LANDING_CHANNELID):
-        print(f'Welcoming {message.author.name}')
+        log(f'Welcoming {message.author.name}')
         msg = await message.author.send(WELCOME_TEXT)
         for role_name in ROLES:
             emoji = ROLES[role_name]['emoji']
@@ -182,7 +187,7 @@ async def on_message(message):
         with open('messages.txt', 'a') as file:
             file.write(f'\n{msg.id}')
     elif message.content.startswith('!welcome') and message.author.id in ADMIN_USERIDS:
-        print(f'Welcoming {message.author.name}')
+        log(f'Welcoming {message.author.name}')
         user_id_str = message.content.strip().split()[1]
         try:
             user_id = int(user_id_str)
@@ -266,7 +271,7 @@ async def on_message(message):
 @bot.event
 async def on_ready():
     global ROLES
-    print(f'{bot.user} has connected to Discord! {bot.guilds[0].name}')
+    log(f'{bot.user} has connected to Discord! {bot.guilds[0].name}')
     ROLES = {
         '3DChameleon': {
             'emoji': bot.get_emoji(intenv('3DCHAMELEON_EMOJI')),
@@ -312,7 +317,7 @@ async def on_ready():
 async def changeStatus():
     mmu = random.choice(MMUS)
     status = f'with the {mmu}'
-    print(status)
+    log(status)
     await bot.change_presence(activity=discord.Game(name=status))
 
 # Run the bot
