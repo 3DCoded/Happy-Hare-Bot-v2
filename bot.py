@@ -17,7 +17,7 @@ The bot supports the following commands:
         ```ini
         [mcu]
         serial: /dev/serial/by-id/usb-klipper-12345-if00
-        ```            
+        ```
         [mcu]
         serial: /dev/serial/by-id/usb-klipper-12345-if00
 - /code @user
@@ -61,6 +61,8 @@ Here are a few quick things to know:
 ❤️ React to this message with the emojis for your favorite MMU's to receive update notifications from their designers.
 """
 
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 def log(text):
     with open('log.txt', 'a+') as file:
         file.write(text + '\n')
@@ -102,7 +104,7 @@ CODE_TEXT = '''When posting configs or logs, please surround with code fences (\
 \`\`\`ini
 [mcu]
 serial: /dev/serial/by-id/usb-klipper-12345-if00
-\`\`\`            
+\`\`\`
 ```ini
 [mcu]
 serial: /dev/serial/by-id/usb-klipper-12345-if00
