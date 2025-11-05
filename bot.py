@@ -33,6 +33,7 @@ import os
 import sys
 import random
 import json
+import time
 from dotenv import load_dotenv
 import discord
 from discord.ext import commands, tasks
@@ -42,6 +43,12 @@ from discord.utils import get as dget
 load_dotenv()
 
 TOKEN = os.getenv('TOKEN')
+
+MESSAGE_TRACKER = {}
+SPAM_THRESHOLD = 5  # number of channels
+SPAM_TIMEFRAME = 60  # seconds
+MOD_CHANNEL_ID = int(os.getenv('MOD_CHANNEL_ID'))  # new env var for mod channel
+MOD_PING = os.getenv('MOD_PING')  # e.g. '@moderators'
 
 WELCOME_TEXT = """
 ## Welcome to the Happy Hare Discord server!
@@ -182,6 +189,25 @@ async def on_raw_reaction_remove(payload):
 @bot.event
 async def on_message(message):
     # log(message.author, message.content)
+    now = time.time()
+    attachments = ','.join([a.filename for a in message.attachments]) if message.attachments else ''
+    content_key = f"{message.content.strip()}|{attachments}"
+    MESSAGE_TRACKER.setdefault(content_key, [])
+    MESSAGE_TRACKER[content_key] = [entry for entry in MESSAGE_TRACKER[content_key] if now - entry['time'] < SPAM_TIMEFRAME]
+    MESSAGE_TRACKER[content_key].append({'channel': message.channel.id, 'time': now, 'author': message.author.id, 'message': message})
+    unique_channels = {entry['channel'] for entry in MESSAGE_TRACKER[content_key]}
+    if len(unique_channels) >= SPAM_THRESHOLD:
+        mod_channel = await bot.fetch_channel(MOD_CHANNEL_ID)
+        await mod_channel.send(f"🚨 Possible spam detected from {message.author.mention} in multiple channels:\n{MOD_PING}\n\nMessage:\n{message.content}")
+        for a in message.attachments:
+            await mod_channel.send(a.url)
+        # Delete all tracked messages
+        for entry in MESSAGE_TRACKER[content_key]:
+            try:
+                await entry['message'].delete()
+            except discord.errors.Forbidden:
+                pass
+        MESSAGE_TRACKER.pop(content_key, None)
     if message.content.strip() == '' and len(message.stickers) == 0 and str(message.channel.id) == str(LANDING_CHANNELID):
         log(f'Welcoming {message.author.name}')
         msg = await message.author.send(WELCOME_TEXT)
