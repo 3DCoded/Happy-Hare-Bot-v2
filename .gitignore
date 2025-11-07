@@ -2,3 +2,6 @@
 .DS_Store
 .env
 messages.txt
+log.txt
+.venv/*
+*.lock
