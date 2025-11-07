@@ -367,10 +367,18 @@ async def count_members_with_role(bot: discord.Client, role_id: int) -> int:
 
     return count
 
-@tasks.loop(seconds=3600)
+@tasks.loop(seconds=10)
 async def changeStatus():
     mmu = random.choice(MMUS)
-    status = f'with the {mmu}'
+    verb = random.choice([
+        'Printing with',
+        'Tinkering with',
+        'Calibrating',
+        'Building',
+        'Fixing',
+        'Screaming at',
+    ])
+    status = f'{verb} the {mmu}'
     log(status)
     await bot.change_presence(activity=discord.Game(name=status))
 
