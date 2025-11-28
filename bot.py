@@ -59,7 +59,7 @@ Here are a few quick things to know:
 
 🖼️ Post pictures of completed multimaterial prints in the <#1325809620417249280> channel.
 
-🌐 To install the new Mainsail/Fluidd interface for Happy Hare, read the **PINNED** messages in the <#1306047636117127318> channel. If you don't, I have been programmed to automatically remind you to **READ THE PINNED MESSAGES**. Sorry. This has happened a lot before...
+🌐 To view the MMU panel for Happy Hare in Mainsail/Fluidd, simply update your Mainsail/Fluidd version to the latest version! (This was released as of November 27, 2025)
 
 🛠️ Explore the various MMU channels in the "MMU Systems" section.
 
@@ -121,7 +121,7 @@ serial: /dev/serial/by-id/usb-klipper-12345-if00
 
 # Invoked with !ui or the timeout
 async def send_ui_msg(ctx):
-    await ctx.send("PLEASE don't ask us how to install Mainsail or Fluidd HH Edition. Just check the pinned messages. :smiley:", silent=True)
+    await ctx.send("You can now update Mainsail/Fluidd to the latest version to view the MMU panel! <:mainsail:1346960310300315855><:fluidd:1346960443310080010>:tada: ", silent=True)
 
 # /sync command to update / commands (reserved for admin-listed users)
 @bot.command()
