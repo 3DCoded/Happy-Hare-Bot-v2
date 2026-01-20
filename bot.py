@@ -190,12 +190,14 @@ async def on_raw_reaction_remove(payload):
 async def on_message(message):
     # log(message.author, message.content)
     now = time.time()
-    attachments = ','.join([a.filename for a in message.attachments]) if message.attachments else ''
+    attachments = str(len(message.attachments)) if message.attachments else ''
     content_key = f"{message.content.strip()}|{attachments}"
     MESSAGE_TRACKER.setdefault(content_key, [])
     MESSAGE_TRACKER[content_key] = [entry for entry in MESSAGE_TRACKER[content_key] if now - entry['time'] < SPAM_TIMEFRAME]
     MESSAGE_TRACKER[content_key].append({'channel': message.channel.id, 'time': now, 'author': message.author.id, 'message': message})
     unique_channels = {entry['channel'] for entry in MESSAGE_TRACKER[content_key]}
+    if len(unique_channels) > 1:
+        print(f'Spam #{len(unique_channels)}: {content_key}')
     if len(unique_channels) >= SPAM_THRESHOLD:
         mod_channel = await bot.fetch_channel(MOD_CHANNEL_ID)
         await mod_channel.send(f"🚨 Possible spam detected from {message.author.mention} in multiple channels:\n{MOD_PING}\n\nMessage:\n{message.content}")
