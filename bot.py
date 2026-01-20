@@ -197,7 +197,7 @@ async def on_message(message):
     MESSAGE_TRACKER[content_key].append({'channel': message.channel.id, 'time': now, 'author': message.author.id, 'message': message})
     unique_channels = {entry['channel'] for entry in MESSAGE_TRACKER[content_key]}
     if len(unique_channels) > 1:
-        print(f'Spam #{len(unique_channels)}: {content_key}')
+        log(f'Spam #{len(unique_channels)}: {content_key}')
     if len(unique_channels) >= SPAM_THRESHOLD:
         mod_channel = await bot.fetch_channel(MOD_CHANNEL_ID)
         await mod_channel.send(f"🚨 Possible spam detected from {message.author.mention} in multiple channels:\n{MOD_PING}\n\nMessage:\n{message.content}")
@@ -381,7 +381,7 @@ async def changeStatus():
         'Screaming at',
     ])
     status = f'{verb} the {mmu}'
-    log(status)
+    log(f'Changing status to {status}')
     await bot.change_presence(activity=discord.Game(name=status))
 
 # Run the bot
