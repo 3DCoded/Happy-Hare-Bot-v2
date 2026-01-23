@@ -45,7 +45,7 @@ load_dotenv()
 TOKEN = os.getenv('TOKEN')
 
 MESSAGE_TRACKER = {}
-SPAM_THRESHOLD = 5  # number of channels
+SPAM_THRESHOLD = 3  # number of channels
 SPAM_TIMEFRAME = 60  # seconds
 MOD_CHANNEL_ID = int(os.getenv('MOD_CHANNEL_ID'))  # new env var for mod channel
 MOD_PING = os.getenv('MOD_PING')  # e.g. '@moderators'
