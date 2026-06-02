@@ -1,6 +1,7 @@
 .token
 .DS_Store
 .env
+.env*
 messages.txt
 log.txt
 .venv/*
