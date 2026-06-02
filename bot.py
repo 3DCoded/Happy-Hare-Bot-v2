@@ -254,7 +254,7 @@ async def on_message(message):
         elif param.startswith('@') and not ' ' in param:
             user = '<@'+param[1:]+'>'
         elif param.startswith('<@') and not ' ' in param:
-            user = param[2:-1]
+            user = param
         elif len(param.split()) == 2:
             channel_id = int(param.split()[0][1:])
             channel = await bot.fetch_channel(channel_id)
