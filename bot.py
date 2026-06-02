@@ -86,8 +86,11 @@ UI_CHANNEL_ID = os.getenv('UI_CHANNEL_ID')
 LANDING_CHANNELID = os.getenv('LANDING_CHANNELID')
 GUILD_ID = int(os.getenv('GUILD_ID'))
 
-if not os.path.exists('messages.txt'):
-    with open('messages.txt', 'w+') as file:
+if not os.path.exists('data'):
+    os.mkdir('data')
+
+if not os.path.exists('data/messages.txt'):
+    with open('data/messages.txt', 'w+') as file:
         file.write('')
 
 MMUS = '3DChameleon🦎,3MS,Box Turtle🐢,ERCF🥕,Night Owl🦉,Pico MMU,QuattroBox,Tradrack'.strip().split(',')
@@ -153,7 +156,7 @@ async def on_raw_reaction_add(payload):
     # Fetch the user (works even if they're not cached)
     user = await bot.fetch_user(payload.user_id)
 
-    with open('messages.txt') as file:
+    with open('data/messages.txt') as file:
         if str(payload.message_id) not in file.read():
             return
     emoji_label = payload.emoji.name
@@ -175,7 +178,7 @@ async def on_raw_reaction_remove(payload):
         return
 
     # Fetch the user (works even if they're not cached)
-    with open('messages.txt') as file:
+    with open('data/messages.txt') as file:
         if str(payload.message_id) not in file.read():
             return
     user = await bot.fetch_user(payload.user_id)
@@ -222,7 +225,7 @@ async def on_message(message):
         for role_name in ROLES:
             emoji = ROLES[role_name]['emoji']
             await msg.add_reaction(emoji)
-        with open('messages.txt', 'a') as file:
+        with open('data/messages.txt', 'a') as file:
             file.write(f'\n{msg.id}')
     elif message.content.startswith('!welcome') and message.author.id in ADMIN_USERIDS:
         logging.info(f'Welcoming {message.author.name}')
@@ -237,7 +240,7 @@ async def on_message(message):
         for role_name in ROLES:
             emoji = ROLES[role_name]['emoji']
             await msg.add_reaction(emoji)
-        with open('messages.txt', 'a') as file:
+        with open('data/messages.txt', 'a') as file:
             file.write(f'\n{msg.id}')
 
     # !code @user command
@@ -297,7 +300,7 @@ async def on_message(message):
         # else:
         channel = message.channel
         msg = await channel.send('React to this message to subscribe to notifications for your MMU!')
-        with open('messages.txt', 'a') as file:
+        with open('data/messages.txt', 'a') as file:
             file.write(f'\n{msg.id}')
         for role_name in ROLES:
             emoji = ROLES[role_name]['emoji']
