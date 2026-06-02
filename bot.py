@@ -93,7 +93,7 @@ def init_messages():
     if not os.path.exists('data'):
         os.mkdir('data')
     if os.path.isdir(MESSAGES_FILE):
-        os.remove(MESSAGES_FILE)
+        os.rmdir(MESSAGES_FILE)
     if not os.path.exists(MESSAGES_FILE):
         with open(MESSAGES_FILE, 'w+') as file:
             file.write('')
