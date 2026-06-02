@@ -86,12 +86,28 @@ UI_CHANNEL_ID = os.getenv('UI_CHANNEL_ID')
 LANDING_CHANNELID = os.getenv('LANDING_CHANNELID')
 GUILD_ID = int(os.getenv('GUILD_ID'))
 
-if not os.path.exists('data'):
-    os.mkdir('data')
+MESSAGES_FILE = 'data/messages.txt'
+MESSAGES = []
 
-if not os.path.exists('data/messages.txt'):
-    with open('data/messages.txt', 'w+') as file:
-        file.write('')
+def init_messages():
+    if not os.path.exists('data'):
+        os.mkdir('data')
+    if not os.path.exists(MESSAGES_FILE):
+        with open(MESSAGES_FILE, 'w+') as file:
+            file.write('')
+
+def add_message(mid):
+    with open(MESSAGES_FILE, 'a') as file:
+        file.write(f'\n{mid}')
+    MESSAGES.append(mid)
+
+def load_messages():
+    global MESSAGES
+    with open(MESSAGES_FILE) as file:
+        MESSAGES = list(map(int, file.read().strip().splitlines()))
+
+init_messages()
+load_messages()
 
 MMUS = '3DChameleon🦎,3MS,Box Turtle🐢,ERCF🥕,Night Owl🦉,Pico MMU,QuattroBox,Tradrack'.strip().split(',')
 
@@ -156,9 +172,9 @@ async def on_raw_reaction_add(payload):
     # Fetch the user (works even if they're not cached)
     user = await bot.fetch_user(payload.user_id)
 
-    with open('data/messages.txt') as file:
-        if str(payload.message_id) not in file.read():
-            return
+    if payload.message_id not in MESSAGES:
+        return
+    
     emoji_label = payload.emoji.name
     for role_name, info in ROLES.items():
         if info['emoji'] == emoji_label or getattr(info['emoji'], 'name', None) == emoji_label:
@@ -176,11 +192,11 @@ async def on_raw_reaction_remove(payload):
     # Skip bots
     if payload.user_id == bot.user.id:
         return
+    
+    if payload.message_id not in MESSAGES:
+        return
 
     # Fetch the user (works even if they're not cached)
-    with open('data/messages.txt') as file:
-        if str(payload.message_id) not in file.read():
-            return
     user = await bot.fetch_user(payload.user_id)
     emoji_label = payload.emoji.name
     for role_name, info in ROLES.items():
@@ -225,8 +241,7 @@ async def on_message(message):
         for role_name in ROLES:
             emoji = ROLES[role_name]['emoji']
             await msg.add_reaction(emoji)
-        with open('data/messages.txt', 'a') as file:
-            file.write(f'\n{msg.id}')
+        add_message(msg.id)
     elif message.content.startswith('!welcome') and message.author.id in ADMIN_USERIDS:
         logging.info(f'Welcoming {message.author.name}')
         user_id_str = message.content.strip().split()[1]
@@ -240,8 +255,7 @@ async def on_message(message):
         for role_name in ROLES:
             emoji = ROLES[role_name]['emoji']
             await msg.add_reaction(emoji)
-        with open('data/messages.txt', 'a') as file:
-            file.write(f'\n{msg.id}')
+        add_message(msg.id)
 
     # !code @user command
     # !code #channelid command
@@ -300,8 +314,7 @@ async def on_message(message):
         # else:
         channel = message.channel
         msg = await channel.send('React to this message to subscribe to notifications for your MMU!')
-        with open('data/messages.txt', 'a') as file:
-            file.write(f'\n{msg.id}')
+        add_message(msg.id)
         for role_name in ROLES:
             emoji = ROLES[role_name]['emoji']
             await msg.add_reaction(emoji)
@@ -319,6 +332,7 @@ async def on_message(message):
 async def on_ready():
     global ROLES
     logging.info(f'{bot.user} has connected to Discord! {bot.guilds[0].name}')
+    logging.info(f'Connected with {len(MESSAGES)} reaction-role messages')
     ROLES = {
         '3DChameleon': {
             'emoji': bot.get_emoji(intenv('3DCHAMELEON_EMOJI')),
