@@ -106,7 +106,7 @@ def add_message(mid):
 def load_messages():
     global MESSAGES
     with open(MESSAGES_FILE) as file:
-        MESSAGES = list(map(int, file.read().strip().splitlines()))
+        MESSAGES = list(map(int, file.read().strip().replace('\n\n', '\n').splitlines()))
 
 init_messages()
 load_messages()
