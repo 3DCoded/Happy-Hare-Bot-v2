@@ -22,8 +22,6 @@ The bot supports the following commands:
         serial: /dev/serial/by-id/usb-klipper-12345-if00
 - /code @user
     Same function as !code @user, but this is restricted to admins.
-- !say <text>
-    Reserved for admin-listed users. Sends a message containing <text>.
 
 Other features:
 - When a message is sent in the #mainsail-fluidd channel containing both "how" AND "?", the UI message is sent, but frendlier.
@@ -32,12 +30,10 @@ Other features:
 import os
 import sys
 import random
-import json
 import time
 from dotenv import load_dotenv
 import discord
 from discord.ext import commands, tasks
-from discord.utils import get as dget
 import logging
 
 logging.basicConfig(
@@ -45,7 +41,7 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        # logging.FileHandler("log.txt"),   # optional for file-based logging
+        logging.FileHandler("log.txt"),  # optional for file-based logging
     ]
 )
 
@@ -55,10 +51,10 @@ load_dotenv()
 TOKEN = os.getenv('TOKEN')
 
 MESSAGE_TRACKER = {}
-SPAM_THRESHOLD = 5  # number of channels
-SPAM_TIMEFRAME = 60  # seconds
-MOD_CHANNEL_ID = int(os.getenv('MOD_CHANNEL_ID'))  # new env var for mod channel
-MOD_PING = os.getenv('MOD_PING')  # e.g. '@moderators'
+SPAM_THRESHOLD = 5  # maximum messages in timeframe
+SPAM_TIMEFRAME = 60  # seconds per window
+MOD_CHANNEL_ID = int(os.getenv('MOD_CHANNEL_ID'))
+MOD_PING = os.getenv('MOD_PING')
 
 WELCOME_TEXT = """
 ## Welcome to the Happy Hare Discord server!
@@ -75,55 +71,28 @@ Here are a few quick things to know:
 
 📜 Have fun, and remember: this is a family-friendly server.
 
-❤️ React to this message with the emojis for your favorite MMU's to receive update notifications from their designers.
 """
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # Used for some commands
 ADMIN_USERIDS = list(map(int, os.getenv('ADMIN_USERIDS').split(',')))
-UI_CHANNEL_ID = os.getenv('UI_CHANNEL_ID')
 LANDING_CHANNELID = os.getenv('LANDING_CHANNELID')
-GUILD_ID = int(os.getenv('GUILD_ID'))
-
-MESSAGES_FILE = 'data/messages.txt'
-MESSAGES = []
-
-def init_messages():
-    if not os.path.exists('data'):
-        os.mkdir('data')
-    if os.path.isdir(MESSAGES_FILE):
-        os.rmdir(MESSAGES_FILE)
-    if not os.path.exists(MESSAGES_FILE):
-        with open(MESSAGES_FILE, 'w+') as file:
-            file.write('')
-
-def add_message(mid):
-    with open(MESSAGES_FILE, 'a') as file:
-        file.write(f'\n{mid}')
-    MESSAGES.append(mid)
-
-def load_messages():
-    global MESSAGES
-    with open(MESSAGES_FILE) as file:
-        MESSAGES = list(map(int, file.read().strip().replace('\n\n', '\n').splitlines()))
-
-init_messages()
-load_messages()
 
 MMUS = '3DChameleon🦎,3MS,Box Turtle🐢,ERCF🥕,Night Owl🦉,Pico MMU,QuattroBox,Tradrack'.strip().split(',')
 
+IMAGES = {
+    'rollover': 'rollover.png'
+}
+
+def get_image_path(image_name):
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', IMAGES[image_name])
+
 intents = discord.Intents.default()
 intents.messages = True  # Read messages
-intents.reactions = True
-intents.members = True
-intents.guild_reactions = True
 intents.message_content = True  # Read message content
 intents.guild_messages = True
 bot = commands.Bot(command_prefix='/', intents=intents)
-
-def intenv(name):
-    return int(os.getenv(name))
 
 async def attempt_to_delete(message):
     try:
@@ -131,16 +100,14 @@ async def attempt_to_delete(message):
     except discord.errors.Forbidden:
         pass
 
-ROLES = {}
-
 # Code text
 CODE_TEXT = '''
 
-When posting configs or logs, please surround with code fences (\`\`\`) so that Discord formats them correctly. Example:
-\`\`\`ini
+When posting configs or logs, please surround with code fences (```) so that Discord formats them correctly. Example:
+```ini
 [mcu]
 serial: /dev/serial/by-id/usb-klipper-12345-if00
-\`\`\`
+```
 ```ini
 [mcu]
 serial: /dev/serial/by-id/usb-klipper-12345-if00
@@ -165,53 +132,6 @@ async def sync(ctx):
 async def tell_code(ctx, arg: discord.Member):
     await ctx.response.send_message(f'''{arg.mention}{CODE_TEXT}''')
 
-@bot.event
-async def on_raw_reaction_add(payload):
-    # Skip bots
-    if payload.user_id == bot.user.id:
-        return
-
-    # Fetch the user (works even if they're not cached)
-    user = await bot.fetch_user(payload.user_id)
-
-    if payload.message_id not in MESSAGES:
-        return
-    
-    emoji_label = payload.emoji.name
-    for role_name, info in ROLES.items():
-        if info['emoji'] == emoji_label or getattr(info['emoji'], 'name', None) == emoji_label:
-            guild = bot.get_guild(GUILD_ID)
-            member = await guild.fetch_member(user.id)
-            role = guild.get_role(info['roleid'])
-            logging.info(role.name)
-            await member.add_roles(role)
-            logging.info(f'Added {user.display_name} to {role_name}')
-            await user.send(f'You have successfully subscribed to {role.name}.')
-            break
-
-@bot.event
-async def on_raw_reaction_remove(payload):
-    # Skip bots
-    if payload.user_id == bot.user.id:
-        return
-    
-    if payload.message_id not in MESSAGES:
-        return
-
-    # Fetch the user (works even if they're not cached)
-    user = await bot.fetch_user(payload.user_id)
-    emoji_label = payload.emoji.name
-    for role_name, info in ROLES.items():
-        if info['emoji'] == emoji_label or getattr(info['emoji'], 'name', None) == emoji_label:
-            guild = bot.get_guild(GUILD_ID)
-            member = await guild.fetch_member(user.id)
-            role = guild.get_role(info['roleid'])
-            logging.info(role.name)
-            await member.remove_roles(role)
-            logging.info(f'Removed {member.display_name} from {role_name}')
-            await user.send(f'You have successfully unsubscribed from {role.name}.')
-            break
-
 # Event: Message received
 @bot.event
 async def on_message(message):
@@ -221,7 +141,7 @@ async def on_message(message):
     content_key = f"{message.content.strip()}|{attachments}"
     MESSAGE_TRACKER.setdefault(content_key, [])
     MESSAGE_TRACKER[content_key] = [entry for entry in MESSAGE_TRACKER[content_key] if now - entry['time'] < SPAM_TIMEFRAME]
-    MESSAGE_TRACKER[content_key].append({'channel': message.channel.id, 'time': now, 'author': message.author.id, 'message': message})
+    MESSAGE_TRACKER[content_key].append({'channel': message.channel.id, 'time': now, 'message': message})
     unique_channels = {entry['channel'] for entry in MESSAGE_TRACKER[content_key]}
     if len(unique_channels) > 1:
         logging.warning(f'Spam #{len(unique_channels)}: {content_key}')
@@ -239,11 +159,7 @@ async def on_message(message):
         MESSAGE_TRACKER.pop(content_key, None)
     if message.content.strip() == '' and len(message.stickers) == 0 and str(message.channel.id) == str(LANDING_CHANNELID):
         logging.info(f'Welcoming {message.author.name}')
-        msg = await message.author.send(WELCOME_TEXT)
-        for role_name in ROLES:
-            emoji = ROLES[role_name]['emoji']
-            await msg.add_reaction(emoji)
-        add_message(msg.id)
+        await message.author.send(WELCOME_TEXT)
     elif message.content.startswith('!welcome') and message.author.id in ADMIN_USERIDS:
         logging.info(f'Welcoming {message.author.name}')
         user_id_str = message.content.strip().split()[1]
@@ -253,11 +169,7 @@ async def on_message(message):
             user_id = int(user_id_str[1:])
         user = await bot.fetch_user(user_id)
         await attempt_to_delete(message)
-        msg = await user.send(WELCOME_TEXT)
-        for role_name in ROLES:
-            emoji = ROLES[role_name]['emoji']
-            await msg.add_reaction(emoji)
-        add_message(msg.id)
+        await user.send(WELCOME_TEXT)
 
     # !code @user command
     # !code #channelid command
@@ -307,92 +219,25 @@ async def on_message(message):
             channel = await bot.fetch_channel(channel_id)
         await attempt_to_delete(message)
         await send_ui_msg(channel)
-    # !roles command
-    elif message.content.startswith('!roles') and message.author.id in ADMIN_USERIDS:
-        await attempt_to_delete(message)
-        # if len(message.content.split()) > 1:
-        #     channel_id = int(message.content.split()[1][2:-1])
-        #     channel = await bot.fetch_channel(channel_id)
-        # else:
+    # !rollover command
+    elif message.content.startswith('!rollover'):
         channel = message.channel
-        msg = await channel.send('React to this message to subscribe to notifications for your MMU!')
-        add_message(msg.id)
-        for role_name in ROLES:
-            emoji = ROLES[role_name]['emoji']
-            await msg.add_reaction(emoji)
-    elif message.content.startswith('!rolecount') and message.author.id in ADMIN_USERIDS:
-        await message.reply('Counting role users')
-        for role_name in ROLES:
-            role_id = ROLES[role_name]['roleid']
-            count = await count_members_with_role(bot, role_id=role_id)
-            await message.channel.send(f'{role_name}: {count}')
-
+        if len(message.content.split()) == 2:
+            channel_id = int(message.content.split()[1][1:])
+            channel = await bot.fetch_channel(channel_id)
+        await attempt_to_delete(message)
+        image_path = get_image_path('rollover')
+        with open(image_path, 'rb') as f:
+            picture = discord.File(f)
+            await channel.send(file=picture)
+    
     await bot.process_commands(message)
 
 # Event: Bot is ready
 @bot.event
 async def on_ready():
-    global ROLES
     logging.info(f'{bot.user} has connected to Discord! {bot.guilds[0].name}')
-    logging.info(f'Connected with {len(MESSAGES)} reaction-role messages')
-    ROLES = {
-        '3DChameleon': {
-            'emoji': bot.get_emoji(intenv('3DCHAMELEON_EMOJI')),
-            'roleid': intenv('3DCHAMELEON_ROLE')
-        },
-        '3MS': {
-            'emoji': bot.get_emoji(intenv('3MS_EMOJI')),
-            'roleid': intenv('3MS_ROLE')
-        },
-        'Angry Beaver': {
-            'emoji': '🦫',
-            'roleid': intenv('ANGRYBEAVER_ROLE')
-        },
-        'Box Turtle': {
-            'emoji': '🐢',
-            'roleid': intenv('BOXTURTLE_ROLE')
-        },
-        'ERCF': {
-            'emoji': '🥕',
-            'roleid': intenv('ERCF_ROLE')
-        },
-        'Night Owl': {
-            'emoji': '🦉',
-            'roleid': intenv('NIGHTOWL_ROLE')
-        },
-        'Pico MMU': {
-            'emoji': bot.get_emoji(intenv('PICO_EMOJI')),
-            'roleid': intenv('PICO_ROLE')
-        },
-        'QuattroBox': {
-            'emoji': bot.get_emoji(intenv('QUATTROBOX_EMOJI')),
-            'roleid': intenv('QUATTROBOX_ROLE')
-        },
-        'Tradrack': {
-            'emoji': bot.get_emoji(intenv('TRADRACK_EMOJI')),
-            'roleid': intenv('TRADRACK_ROLE')
-        },
-    }
     changeStatus.start()
-
-
-async def count_members_with_role(bot: discord.Client, role_id: int) -> int:
-    guild = bot.get_guild(GUILD_ID)
-    if guild is None:
-        print("Guild not found.")
-        return 0
-
-    role = guild.get_role(role_id)
-    if role is None:
-        print("Role not found.")
-        return 0
-
-    count = 0
-    async for member in guild.fetch_members(limit=None):
-        if role in member.roles:
-            count += 1
-
-    return count
 
 @tasks.loop(seconds=10)
 async def changeStatus():
