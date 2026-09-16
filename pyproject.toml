@@ -1,0 +1,19 @@
+[project]
+name = "happy-hare-bot-v2"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "aiohappyeyeballs==2.6.1",
+    "aiohttp==3.13.2",
+    "aiosignal==1.4.0",
+    "async-timeout==5.0.1",
+    "attrs==25.4.0",
+    "discord-py==2.6.4",
+    "frozenlist==1.8.0",
+    "idna==3.11",
+    "multidict==6.7.0",
+    "propcache==0.4.1",
+    "python-dotenv==1.0.1",
+    "typing-extensions==4.15.0",
+    "yarl==1.22.0",
+]

@@ -5,4 +5,3 @@
 messages.txt
 log.txt
 .venv/*
-*.lock
