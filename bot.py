@@ -103,7 +103,7 @@ async def attempt_to_delete(message):
 # Code text
 CODE_TEXT = '''
 
-When posting configs or logs, please surround with code fences (```) so that Discord formats them correctly. Example:
+When posting configs or logs, please surround with code fences (\`\`\`) so that Discord formats them correctly. Example:
 \`\`\`ini
 [mcu]
 serial: /dev/serial/by-id/usb-klipper-12345-if00
